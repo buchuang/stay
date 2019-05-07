@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    	<title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript" >
+		      if (top != window)  
+      			top.location.href = window.location.href;  
+		$(document).ready(function(){
+			$("#loginbtn").click(function(){
+ 		   $.ajax({
+ 		   		type:"post",
+ 		   		dateType:"json",
+ 		   		url:"/user/login",
+ 		   		data:{
+ 		   			usercode:$("#usercode").val(),
+ 		   			password:$("#password").val()
+ 		   		},
+ 		   		beforeSend:function(){
+ 		   			return true;
+ 		   		},
+ 		   		success:function(r){
+ 		   			if(r.success){
+ 		   				//$.messager.alert('提示','登录成功','info');
+ 		   				window.location.href="/ui/main";
+ 		   			}else{
+ 		   				$.messager.alert('提示','登录失败','warning');
+ 		   			}
+ 		   		}
+ 		   });
+		});	
+		$("#clearbtn").click(function(){
+			$("#userForm").form("clear");
+		}); 
+	}); 	
+		 
+	</script>
+  </head>
+  
+  <body style="margin-left: 475px;margin-top: 100px;background-color: #46A3FF">
+  		<div><font size="30">大学生留校办理系统</font></div>
+		<div class="easyui-panel" title="登录" style="width:400px;height: 200px">
+		<div style="padding:10px 60px 20px 60px">
+	    <form id="userForm" method="post" action="/user/login">
+	    	<table>
+	    		<tr>
+	    			<td>用户名:</td>
+	    			<td><input id="usercode" class="easyui-validatebox textbox" type="text" name="usercode" data-options="required:true"></input></td>
+	    		</tr>
+	    		<tr>
+	    			<td>密码:</td>
+	    			<td><input id="password" class="easyui-validatebox" type="password" name="password" data-options="required:true"></input></td>
+	    		</tr>
+	    		<tr>
+	    			<td><a id="loginbtn" href="javascript:void(0)" class="easyui-linkbutton">登录</a></td>
+	    			<td><a id="clearbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+	    		</tr>
+	    	</table>
+	    </form>
+	    </div>
+	</div>
+
+</body>
+</html>

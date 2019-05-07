@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){		
+			$("#stSearch").click(function(){
+				var value=$("#stCombobox").combobox("getValue");
+				if(value != '-1'){
+					$('#studentTable').datagrid({
+						url : "/st/findStudentByStId?stid="+value,          
+					});
+				}else{
+					$.messager.alert("提示","请选择社团进行查询","warning");
+				}
+			});
+			$("#stAdd").click(function(){
+				var value=$("#stCombobox").combobox("getValue");
+				var text=$("#stCombobox").combobox("getText");
+				if(value != '-1' ){
+					$("#stid").val(value);
+					$("#stname").val(text);
+					$("#studentAddWin").window("open");
+				}else{
+					$.messager.alert("提示","请选择社团进行添加","warning");
+				}	
+			});
+			$("#clearAddbtn").click(function(){
+				$("#addStudentForm").form("clear");
+				var value=$("#stCombobox").combobox("getValue");
+				var text=$("#stCombobox").combobox("getText");	
+				$("#stid").val(value);
+				$("#stname").val(text);
+			});
+			$("#addbtn").click(function(){
+				$("#addStudentForm").form("submit",{
+					success:function(r){
+					var r = eval('(' + r + ')');
+						if(r.success){
+							$.messager.alert("提示","添加成功","info",function(){
+								var value=$("#stCombobox").combobox("getValue");
+								$('#studentTable').datagrid({
+									url : "/st/findStudentByStId?stid="+value,          
+								});
+							});
+						}else{
+							$.messager.alert("提示","添加失败","warning");
+						}
+					}
+				});
+			});
+			
+			$("#studentRemove").click(function(){
+				var editLine=$("#studentTable").datagrid("getSelections");
+				if(editLine.length==0){
+					$.messager.alert("提示","请选择你要删除的行","warning");
+				}else{
+					var paramObj= {};
+					$.each(editLine,function(i,stDom){
+						paramObj["students["+i+"].id"]=stDom.id;
+					});				
+					$.messager.confirm('确认','您确认想要删除记录吗？',function(r){    
+					    if (r){    
+					        $.ajax({
+								type:"post",
+								dataType:"json",
+								url:"/st/deleteSt",
+								data:paramObj,
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$.messager.alert("提示","删除成功","info",function(){
+											$('#studentTable').datagrid('reload');
+											$('#studentTable').datagrid('clearSelections');
+										});
+									}else{
+										$.messager.alert("提示","删除失败","warning");
+										$('#studentTable').datagrid('clearSelections');
+									}
+								}
+							});   
+					    }    
+					}); 
+				}
+			});
+			
+			
+			$("#studentEdit").click(function(){
+				var editLine=$("#studentTable").datagrid("getSelections");
+				if(editLine.length==0){
+					$.messager.alert("提示","请选择你要修改的行","warning");
+				}else if(editLine.length>1){
+					$.messager.alert("提示","只能修改一条信息","warning");
+				}else{
+					$('#editStudentForm').form('load',editLine[0]);
+					$('#studentEditWin').window('open'); //打开window
+				}
+			});
+			
+			
+			$("#editbtn").click(function(){
+				$('#editStudentForm').form('submit',{
+					success:function(r){
+						var r= eval( "(" +r+ ")" );
+						if(r.success){
+							$.messager.alert("提示","修改成功","info",function(){
+								$('#studentTable').datagrid('reload');
+								$('#studentEditWin').window('close');
+								$('#editStudentForm').datagrid('clearSelections');
+							});
+						}else{
+							$.messager.alert("提示","修改失败","warning");
+							$('#editStudentForm').datagrid('clearSelections');
+						}
+					}
+				}); 
+			});
+			$("#enportStudent").click(function(){
+				var value=$("#stCombobox").combobox("getValue");
+				if(value != null && value != ""){
+					window.location.href="/st/enportStudents?stid="+value;
+				}else{
+					$.messager.alert("提示","请选择社团进行导出","warning");
+				}
+			}); 
+			
+			$.ajax({
+				     url: '/st/findSt_Name',
+				     dataType: 'json',                    
+				     success: function (jsonstr) {                        
+				     jsonstr.unshift({                            
+				     'id': '-1',                            
+				     'text': '-请选择-'                        
+			     });                     
+				     $('#stCombobox').combobox({                            
+					     data: jsonstr,                            
+					     valueField: 'id',                            
+					     textField: 'text',                            
+					     onLoadSuccess: function () { //加载完成后,设置选中第一项                               
+					      var val = $(this).combobox('getData');
+					      if(val.length==2){
+					      	$(this).combobox('select', val[1].id);
+					      }else{
+					      	$(this).combobox('select', val[0].id);
+					      }                                                         
+			     		 }                        
+			      	});                    
+			      }                
+			  });
+	  			
+		});	
+	</script>
+  </head>
+  
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="studentTable" class="easyui-datagrid" 
+	 data-options="
+					fitColumns:true,
+				    border:false,
+				    fit :true,
+				    singleSelect:false,
+				    idField: 'id',
+				    rownumbers: true,
+				    pagination:true,
+				    toolbar: '#toolbar'">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'s_no',width:100">学号</th>   
+	           <th data-options="field:'s_name',width:100">姓名</th>    
+	           <th data-options="field:'s_class',width:100">班级</th>   
+	           <th data-options="field:'s_phone',width:100">电话</th>     
+	           <th data-options="field:'s_grade',width:100,align:'right'">年级</th>   
+	       </tr>   
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+		     社团：<input id="stCombobox" class="easyui-combobox" name="st_name" />
+	  	  <a id="stSearch" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">搜索</a>
+	  	  <a id="stAdd" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">添加</a>
+		  <a id="studentRemove" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">删除</a>
+		  <a id="studentEdit" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true">修改</a>
+		  <a id="enportStudent" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">导出社团名单</a>
+	 </div>
+	 <div id="studentAddWin" class="easyui-window" title="添加社团成员"  
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:300px;">
+    	<div class="easyui-panel" style="width:400px;height: 300px">
+	    	 <form id="addStudentForm" method="post" action="/st/addStudent">
+	    	 <input  id="stid" type="hidden" name="stid" ></input>
+	    	 <input  id="stname" type="text" name="stname" disabled="disabled"></input>
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>学号:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_no" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>姓名:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_name" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>班级:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_class" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>电话:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_phone" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>年级:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="s_grade" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="addbtn" href="javascript:void(0)" class="easyui-linkbutton">添加</a></td>
+		    			<td><a id="clearAddbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+    <div id="studentEditWin" class="easyui-window" title="修改用户"  
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:300px;">
+    	<div class="easyui-panel" style="width:400px;height: 300px">
+	    	 <form id="editStudentForm" method="post" action="/st/editStudent">
+	    	 	<input  type="text" name="id" hidden = "hidden"></input>
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>学号:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_no" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>姓名:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_name" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>班级:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_class" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>电话:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="s_phone" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>年级:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="s_grade" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="editbtn" href="javascript:void(0)" class="easyui-linkbutton">修改</a></td>
+		    			<td><a id="clearEditbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+  </body>
+</html>
+  

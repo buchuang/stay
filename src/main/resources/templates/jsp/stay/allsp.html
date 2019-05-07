@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('#stayTable').datagrid({    
+			    url:'/stay/allSpList',     
+			});
+						
+			$("#stayRemove").click(function(){
+				var removeLine=$("#stayTable").datagrid("getSelections");
+				if(removeLine.length==0){
+					$.messager.alert("提示","请选择你要删除的行","warning");
+				}else{
+					var paramObj= {};
+					$.each(removeLine,function(i,stayDom){
+						paramObj["stays["+i+"].id"]=stayDom.id;
+					});	
+					$.messager.confirm('确认','您确认想要删除记录吗？',function(r){    
+					    if (r){    
+					        $.ajax({
+								type:"post",
+								dataType:"json",
+								url:"/stay/deleteStayTicket",
+								data:paramObj,
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$.messager.alert("提示","删除成功","info",function(){
+											$('#stayTable').datagrid('reload');
+											$('#stayTable').datagrid('clearSelections');
+										});
+									}else{
+										$.messager.alert("提示","删除失败","warning");
+										$('#stayTable').datagrid('clearSelections');
+									}
+								}
+							});   
+					    }   
+					}); 	
+				}
+			});
+			
+			$("#apphistory").click(function(){
+				var editLine=$("#stayTable").datagrid("getSelections");
+				if(editLine.length==0){
+					$.messager.alert("提示","请选择你要查看历史的行","warning");
+				}else if(editLine.length>1){
+					$.messager.alert("提示","只能选择一条信息查看","warning");
+				}else{
+					$('#apphistoryWin').window('open'); //打开window
+					$('#appHistoryTable').datagrid({    
+					    url:'/stay/historyList?id='+editLine[0].id,    
+					    fitColumns:true,
+					    border:false,
+					    fit :true,
+					    singleSelect:false,
+					    rownumbers: true,
+					});
+					$('#stayTable').datagrid('clearSelections');
+				}
+			});
+
+		$("#exportA").click(function(){
+			window.location.href="/stay/exportAllExcel";
+		});
+		$("#exportB").click(function(){
+			window.location.href="/stay/exportSuccessExcel";
+		});
+		$("#exportC").click(function(){
+			window.location.href="/stay/exportErrorExcel";
+		});
+		
+		$("#queryValuebtn").click(function(){
+				var value=$("#queryValue").val();
+				if(value==null ||value==""){
+					$('#stayTable').datagrid({    
+					    url:'/stay/allSpList'    
+					});
+				}else{
+					$('#stayTable').datagrid({    
+					    url:'/stay/loadByQuery?queryValue='+value     
+					});
+				}				
+			});
+	});	 
+	</script>
+  </head>
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="stayTable" data-options="fitColumns:true,
+			    border:false,
+			    fit :true,
+			    singleSelect:false,
+			    idField: 'id',
+			    rownumbers: true,
+			    pagination:true,
+			    pageSize: 20, 
+			    pageList:[20,40,60,80],
+			    toolbar: '#toolbar'">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'s_no',width:100">学号</th>   
+	           <th data-options="field:'s_name',width:100">姓名</th>   
+	           <th data-options="field:'s_class',width:100">班级</th>   
+	           <th data-options="field:'s_phone',width:100">电话</th>   
+	           <th data-options="field:'s_starttime',width:100">留校起始时间</th>   
+	           <th data-options="field:'s_endtime',width:100">结束时间</th>
+	           <th data-options="field:'s_ssbh',width:100">宿舍编号</th>   
+	           <th data-options="field:'s_reason',width:100">留校原因</th>   
+	           <th data-options="field:'s_zdls',width:100">指导老师</th>   
+	           <th data-options="field:'s_status',width:100,align:'right'">状态</th>   
+	       </tr>   
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+	 	 <input id="queryValue" type="text" name="queryValue"></input>(学号,姓名,电话,指导老师,审判状态)
+	 	 <a id="queryValuebtn" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">查询</a>
+		 <a id="stayRemove" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">删除</a>
+		 <a id="apphistory" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">历史审批</a>	
+		 <a id="exportA" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">导出全部</a>	
+		 <a id="exportB" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">导出审批成功</a>	
+		 <a id="exportC" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">导出审批失败</a>	
+	 </div>
+     <div id="apphistoryWin" class="easyui-window" title="审批历史" 
+     			data-options="modal : true,
+							closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:550px;height:400px;">
+    	<table id="appHistoryTable">   
+	   <thead>   
+	       <tr>  
+	           <th data-options="field:'s_name',width:100">姓名</th>      
+	           <th data-options="field:'spr_name',width:100">审批人</th>      
+	           <th data-options="field:'sp_status',width:100">审批意见</th>      
+	           <th data-options="field:'createtime',width:100">审批时间</th>           
+	       </tr>   
+	   </thead>   
+	</table>
+    </div>
+  </body>
+</html>

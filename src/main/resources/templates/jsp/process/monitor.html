@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('#proc4piTable').datagrid({    
+			    url:'/proc/proc4piList',    
+			    fitColumns:true,
+			    border:false,
+			    fit :true,
+			    singleSelect:false,
+			    idField: "id",
+			    rownumbers: true,
+			    pagination:true,
+			    toolbar: '#toolbar'
+			});
+			
+
+			
+			
+			$("#lookProcImg").click(function(){
+				var Line=$("#proc4piTable").datagrid("getSelections");
+				if(Line.length==0){
+					$.messager.alert("提示","请选择你要查看的行","warning");
+				}else if(Line.length>1){
+					$.messager.alert("提示","只能查看一条信息","warning");
+				}else{
+					$('#lookProcImgWin').window('open'); 
+					$("#procDefImg").attr("src","/proc/loadMonitorImg?id="+Line[0].id);	
+					$('#proc4piTable').datagrid('clearSelections');
+				}
+			});
+			
+		});	 
+	</script>
+  </head>
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="proc4piTable">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'piid',width:100">流程实例标识</th>   
+	           <th data-options="field:'pdname',width:100">流程定义名称</th>   
+	           <th data-options="field:'taskname',width:100">当前活动名称</th>    
+	      	</tr>  
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+		  <a id="lookProcImg" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">查看图片</a>
+	 </div>
+	 
+    <div id="lookProcImgWin" class="easyui-window" title="查看监控图" 
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:600px;height:400px;">
+    	<img  id="procDefImg" src="/static/image/loading.gif">
+    </div>
+  </body>
+</html>

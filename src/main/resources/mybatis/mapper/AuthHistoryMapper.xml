@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nysit.stay.dao.AuthHistoryDao" >
+
+	<select id="getSplsCount" resultType="int">
+		select count(*) from app_history
+	</select>
+	
+	<select id="findSplsByPage" resultType="AppHistory">
+		select * from app_history 
+		where userid=#{userid}
+ 		limit #{startIndex},#{limitIndex}
+	</select>
+	
+ 	<insert id="addHistory">
+ 		insert into app_history(s_no,s_name,s_reason,spr_name,sp_remark,sp_status,taskname,stayid,createtime,userid)
+ 		values(#{s_no},#{s_name},#{s_reason},#{spr_name},#{sp_remark},#{sp_status},#{taskname},#{stayid},#{createtime},#{userid})
+ 	</insert>
+ 	<select id="findHistoryById" resultType="AppHistory">
+ 		select * from app_history where stayid=#{id}
+ 	</select>
+</mapper>

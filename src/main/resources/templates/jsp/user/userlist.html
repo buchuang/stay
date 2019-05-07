@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('#userTable').datagrid({    
+			    url:'/user/userList',    		    
+			});
+			
+			
+			$("#userAdd").click(function(){
+				$('#userAddWin').window('open') //打开window
+			});
+			
+			$("#addbtn").click(function(){
+				var qx=$("#addUserForm input[name='qx']:checked").map(function () {
+	               return $(this).val();
+	           	}).get().join("#");
+				$.ajax({
+					type:"post",
+					dataType:"json",
+					url:"/user/addUser",
+					data:{
+						usercode:$("#usercode").val(),
+						username:$("#username").val(),
+						identify:$("#identify").combobox("getValue"),
+						phone:$("#phone").val(),
+						qx :qx
+					},
+					beforeSend:function(){
+						return true;
+					},
+					success:function(r){
+						if(r.success){
+							$.messager.alert("提示","添加成功","info",function(){
+								$('#userTable').datagrid('reload');
+								$("#userAdd").window("close");
+							});
+						}else{
+							$.messager.alert("提示","添加失败","warning");
+						}
+					}
+				});
+			});
+			
+			
+			$("#clearAddbtn").click(function(){
+				$("#addUserForm").form("clear");
+			});
+			
+			$("#userRemove").click(function(){
+				var row=$("#userTable").datagrid("getSelections");
+				if(row.length==0){
+					$.messager.alert("提示","请选择你要删除的行","warning");
+				}else{
+					var paramObj= {};
+					$.each(row,function(i,userDom){
+						paramObj["users["+i+"].id"]=userDom.id;
+					});				
+					$.messager.confirm('确认','您确认想要删除记录吗？',function(r){    
+					    if (r){    
+					        $.ajax({
+								type:"post",
+								dataType:"json",
+								url:"/user/deleteUser",
+								data:paramObj,
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$.messager.alert("提示","删除成功","info",function(){
+											$('#userTable').datagrid('reload');
+											$('#userTable').datagrid('clearSelections');
+										});
+									}else{
+										$.messager.alert("提示","删除失败","warning");
+										$('#userTable').datagrid('clearSelections');
+									}
+								}
+							});   
+					    }    
+					}); 
+				}
+			});
+			
+			
+			$("#userEdit").click(function(){
+				var row=$("#userTable").datagrid("getSelections");
+				if(row.length==0){
+					$.messager.alert("提示","请选择你要修改的行","warning");
+				}else if(row.length>1){
+					$.messager.alert("提示","只能修改一条信息","warning");
+				}else{
+					$('#editUserForm').form('load',row[0]);
+					$("#identifySelect").combobox("setValue",row[0].identify);
+					var checkbox=row[0].qx;
+					var strs= new Array();
+					strs=checkbox.split(",");
+					var qxs=$("#editUserForm input[name='qx']");
+					$.each(strs,function(i,str){
+						$.each(qxs,function(j,qx){
+							if(str==qxs[j].value){
+								qxs[j].checked="checked";
+							}
+						});
+					});
+					$('#userEditWin').window('open'); //打开window
+				}
+			});
+			
+			
+			$("#editbtn").click(function(){
+				var qx=$("#editUserForm input[name='qx']:checked").map(function () {
+		               return $(this).val();
+		           	}).get().join("#");
+				 $.ajax({
+					type:"post",
+					dataType:"json",
+					url:"/user/editUser",
+					data:{
+						id : $("#editUserForm :input[name='id']").val(),
+						usercode : $("#editUserForm :input[name='usercode']").val(),
+						username : $("#editUserForm :input[name='username']").val(),
+						phone : $("#editUserForm :input[name='phone']").val(),
+						identify : $("#identifySelect").combobox("getValue"),
+						qx : qx
+					},
+					beforeSend:function(){
+						return true;
+					},
+					success:function(r){
+						if(r.success){
+							$.messager.alert("提示","修改成功","info",function(){
+								$('#userTable').datagrid('reload');
+								$('#userEditWin').window('close');
+								$('#userTable').datagrid('clearSelections');
+							});
+						}else{
+							$.messager.alert("提示","修改失败","warning");
+							$('#userTable').datagrid('clearSelections');
+						}
+					}
+				});   
+			});
+			$("#queryValuebtn").click(function(){
+				var value=$("#queryValue").val();
+				if(value==null ||value==""){
+					$('#userTable').datagrid({    
+					    url:'/user/userList',    		    
+					});
+				}else{
+					$('#userTable').datagrid({    
+				    	url:'/user/loadByQuery?queryValue='+value   		    
+					});
+				}				
+			});
+		});	 
+	</script>
+  </head>
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="userTable" data-options="fitColumns:true,
+			    border:false,
+			    fit :true,
+			    singleSelect:false,
+			    idField: 'id',
+			    rownumbers: true,
+			    pagination:true,
+			    toolbar: '#toolbar'">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'qx',hidden:'true'"></th>   
+	           <th data-options="field:'usercode',width:100">用户名</th>   
+	           <th data-options="field:'username',width:100">姓名</th>    
+	           <th data-options="field:'phone',width:100">电话</th>   
+	           <th data-options="field:'identify',width:100,align:'right'">身份</th>   
+	       </tr>   
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+		  <input id="queryValue" type="text" name="queryValue"></input>(账号,姓名,电话,身份)
+	 	  <a id="queryValuebtn" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">查询</a>
+	  	  <a id="userAdd" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">添加</a>
+		  <a id="userRemove" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">删除</a>
+		  <a id="userEdit" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true">修改</a>
+	 </div>
+	 <div id="userAddWin" class="easyui-window" title="添加用户" 
+	 			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:450px;">
+    	<div class="easyui-panel" style="width:400px;height: 450px">
+	    	 <form id="addUserForm" method="post" action="">
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>用户名:</td>
+		    			<td><input id="usercode" class="easyui-validatebox textbox" type="text" name="usercode" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>姓名:</td>
+		    			<td><input id="username" class="easyui-validatebox textbox" type="text" name="username" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>电话:</td>
+		    			<td><input id="phone" class="easyui-validatebox" type="text" name="phone" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+	    			<td>身份:</td>
+	    			<td>
+	    				<select id="identify" class="easyui-combobox" name="identify" data-options="required:true">
+	    				<option value="">请选择</option>
+	    				<option value="社长">社长</option>
+	    				<option value="管委会">管委会</option>
+	    				<option value="指导老师">指导老师</option>
+	    				</select>
+	    			</td>
+	    			</tr>
+	    			<tr>
+		    			<td>赋予权限:</td>
+		    			<td><div>
+			                <input type="checkbox" name="qx" value="6"   />用户管理
+			                <input type="checkbox" name="qx" value="7"  />修改密码<br />
+			                <input type="checkbox" name="qx" value="9" />流程定义
+			                <input type="checkbox" name="qx" value="12"  />流程监控<br />
+			                <input type="checkbox" name="qx" value="13"  />社团管理
+			                <input type="checkbox" name="qx" value="10"  />社团人员清单<br />
+			                <input type="checkbox" name="qx" value="8"  />申请留校单
+			                <input type="checkbox" name="qx" value="11"  />待审批留校单<br />
+			                <input type="checkbox" name="qx" value="14"  />已审留校单
+			                <input type="checkbox" name="qx" value="16"  />审批历史<br />
+			                <input type="checkbox" name="qx" value="17"  />审批结果
+                			</div>
+        				</td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="addbtn" href="javascript:void(0)" class="easyui-linkbutton">添加</a></td>
+		    			<td><a id="clearAddbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+    <div id="userEditWin" class="easyui-window" title="修改用户"  
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:450px;">
+    	<div class="easyui-panel" style="width:400px;height: 450px">
+	    	 <form id="editUserForm" method="post" action="">
+	    	 	<input  type="text" name="id" hidden = "hidden"></input>
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>用户名:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="usercode" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>姓名:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="username" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>电话:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="phone" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+	    			<td>身份:</td>
+	    			<td>
+	    				<select id="identifySelect" class="easyui-combobox" name="identify" data-options="required:true">
+	    				<option value="">请选择</option>
+	    				<option value="社长">社长</option>
+	    				<option value="管委会">管委会</option>
+	    				<option value="指导老师">指导老师</option>
+	    			</td>
+	    			</tr>
+	    			<tr>
+		    			<td>赋予权限:</td>
+		    			<td><div>
+			                <input type="checkbox" name="qx" value="6"   />用户管理
+			                <input type="checkbox" name="qx" value="7"  />修改密码<br />
+			                <input type="checkbox" name="qx" value="9" />流程定义
+			                <input type="checkbox" name="qx" value="12"  />流程监控<br />
+			                <input type="checkbox" name="qx" value="13"  />社团管理
+			                <input type="checkbox" name="qx" value="10"  />社团人员清单<br />
+			                <input type="checkbox" name="qx" value="8"  />申请留校单
+			                <input type="checkbox" name="qx" value="11"  />待审批留校单<br />
+			                <input type="checkbox" name="qx" value="14"  />已审留校单
+			                <input type="checkbox" name="qx" value="16"  />审批历史<br />
+			                <input type="checkbox" name="qx" value="17"  />审批结果
+                			</div>
+        				</td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="editbtn" href="javascript:void(0)" class="easyui-linkbutton">修改</a></td>
+		    			<td><a id="clearEditbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+  </body>
+</html>

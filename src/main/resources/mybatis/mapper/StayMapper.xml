@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nysit.stay.dao.StayTicketDao" >
+ 	
+ 	<select id="findAllZdls" resultType="User">
+ 		select * from user where identify='指导老师'
+ 	</select>
+ 	
+ 	<select id="getCountByQuery" resultType="int" parameterType="string">
+ 		select count(*) from student_stay
+ 		where concat( s_no, s_name, s_phone, s_zdls, s_status) like '%${queryValue}%'
+ 	</select>
+ 	
+ 	<select id="findStayByQuery" resultType="StayTicket">
+ 		select * from student_stay
+ 		where concat( s_no, s_name, s_phone, s_zdls, s_status) like '%${queryValue}%'
+ 		order by createtime asc
+ 		limit #{startIndex},#{limitIndex}
+ 	</select>
+ 	
+ 	<select id="findErrorSp" resultType="StayTicket">
+ 		select * from student_stay where s_status="审批失败" order by createtime asc
+ 	</select>
+ 	<select id="findSuccessSp" resultType="StayTicket">
+ 		select * from student_stay where s_status="审批完成" order by createtime asc
+ 	</select>
+ 	<select id="getAllSpCount" resultType="int">
+ 		select count(*) from student_stay
+ 	</select>
+ 	
+ 	<select id="findAllSpByPage" resultType="StayTicket">
+ 		select * from student_stay
+ 		order by createtime asc
+ 		limit #{startIndex},#{limitIndex}
+ 		
+ 	</select>
+ 	
+ 	<update id="updateAuthStatus">
+ 		update student_stay
+ 		set s_status=#{s_status},
+ 			status=#{status}
+ 		where id=#{id}
+ 	</update>
+ 	
+ 	<select id="findAllSp" resultType="StayTicket">
+ 		select * from student_stay order by createtime asc
+ 	</select>
+ 	
+ 	<select id="findBtByPiid" resultType="StayTicket">
+ 		select st.*,
+ 		u.username
+ 		from student_stay st
+ 		join user u
+ 		on st.userid=u.id
+ 		where piid=#{piid}
+ 	</select>
+ 	
+ 	
+ 	<update id="editStayTicketStatus">
+ 		update student_stay
+ 		set
+ 		s_status=#{s_status},
+ 		piid=#{piid}
+ 		where id=#{id}
+ 	</update>
+ 	
+ 	<update id="editStayTicket">
+ 		update student_stay
+ 		set 
+ 		s_no=#{s_no},s_name=#{s_name},s_class=#{s_class},s_phone=#{s_phone},s_starttime=#{s_starttime},
+ 		s_endtime=#{s_endtime},s_ssbh=#{s_ssbh},s_reason=#{s_reason},s_zdls=#{s_zdls}
+ 		where id=#{id}
+ 	</update>
+ 	
+ 	<select id="deleteStayTicket">
+ 		delete from student_stay
+ 		where id in
+ 		<foreach collection="stays" open="(" close=")" separator="," item="stay">
+ 			#{stay.id}
+ 		</foreach>
+ 	</select>
+ 	
+ 	<select id="insertStayTicket">
+ 		insert into 
+ 		student_stay(s_no,status,createtime,s_name,s_class,s_phone,s_starttime,s_endtime,s_ssbh,s_reason,s_zdls,s_status,userid)
+ 		values(#{s_no},#{status},#{createtime},#{s_name},#{s_class},#{s_phone},#{s_starttime},#{s_endtime},#{s_ssbh},#{s_reason},#{s_zdls},#{s_status},#{userid})
+ 	</select>
+ 	
+ 	<select id="findStayByPage" resultType="StayTicket">
+ 		SELECT *
+ 		FROM student_stay
+ 		where status='0' and userid=#{userid}
+ 		limit #{startIndex},#{limitIndex}
+ 	</select>
+ 	
+ 	<select id="getCount" resultType="int">
+ 		select count(*) from student_stay
+ 		where status='0' and userid=#{userid}
+ 	</select>
+ 	<select id="findYslxdByPage" resultType="StayTicket">
+ 		SELECT *
+ 		FROM student_stay
+ 		where status='1' and userid=#{userid}
+ 		order by createtime asc
+ 		limit #{startIndex},#{limitIndex}
+ 	</select>
+ 	
+ 	<select id="getYslxdCount" resultType="int">
+ 		select count(*) from student_stay where status='1' and userid=#{userid}
+ 	</select>
+ 
+
+ 
+</mapper>

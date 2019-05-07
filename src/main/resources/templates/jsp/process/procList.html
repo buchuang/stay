@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('#procTable').datagrid({    
+			    url:'/proc/procList',    
+			    fitColumns:true,
+			    border:false,
+			    fit :true,
+			    singleSelect:false,
+			    idField: "id",
+			    rownumbers: true,
+			    pagination:true,
+			    toolbar: '#toolbar'
+			});
+			
+			
+			$("#procDefAdd").click(function(){
+				$('#procDefAddWin').window('open'); //打开window
+				
+			});
+			
+			$("#addProcDefbtn").click(function(){
+				$("#addProcDefForm").form("submit",{
+					success: function(r){ 
+						var r = eval('(' + r + ')');   
+				        if (r.success){    
+				             $('#procDefAddWin').window('close');
+				             $('#procTable').datagrid('reload');   
+				        }
+				     }
+				});
+			});
+			
+			
+			$("#clearAddbtn").click(function(){
+				$("#addUserForm").form("clear");
+			});
+			
+			$("#procRemove").click(function(){
+				var removeLine=$("#procTable").datagrid("getSelections");
+				if(removeLine.length==0){
+					$.messager.alert("提示","请选择你要删除的行","warning");
+				}else{
+					var paramObj= {};
+					$.each(removeLine,function(i,procDom){
+						paramObj["deployids["+i+"]"]=procDom.deployids;
+					});				
+					$.messager.confirm('确认','您确认想要删除记录吗？',function(r){    
+					    if (r){    
+					        $.ajax({
+								type:"post",
+								dataType:"json",
+								url:"/proc/deleteProcess",
+								data:paramObj,
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$.messager.alert("提示","删除成功","info",function(){
+											$('#procTable').datagrid('reload');
+											$('#procTable').datagrid('clearSelections');
+										});
+									}else{
+										$.messager.alert("提示","删除失败","warning");
+										$('#procTable').datagrid('clearSelections');
+									}
+								}
+							});   
+					    }    
+					}); 
+				}
+			});
+			
+			
+			$("#lookProcImg").click(function(){
+				var Line=$("#procTable").datagrid("getSelections");
+				if(Line.length==0){
+					$.messager.alert("提示","请选择你要查看的行","warning");
+				}else if(Line.length>1){
+					$.messager.alert("提示","只能查看一条信息","warning");
+				}else{
+					$('#lookProcImgWin').window('open'); 
+					$("#procDefImg").attr("src","/proc/loadingImg?id="+Line[0].id);	
+					$('#procTable').datagrid('clearSelections');
+				}
+			});
+			
+		});	 
+	</script>
+  </head>
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="procTable">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'key',width:100">流程标识</th>   
+	           <th data-options="field:'name',width:100">流程名称</th>   
+	           <th data-options="field:'version',width:100">版本</th>    
+	      	</tr>  
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+	  	  <a id="procDefAdd" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">添加</a>
+		  <a id="procRemove" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">删除</a>
+		  <a id="lookProcImg" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">查看图片</a>
+	 </div>
+	 
+	 <div id="procDefAddWin" class="easyui-window" title="添加流程定义" 
+	 			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:300px;">
+    	<div class="easyui-panel" style="width:400px;height: 300px">
+	    	 <form id="addProcDefForm" method="post" action="/proc/deployProcDef" enctype="multipart/form-data">
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>用户名:</td>
+		    			<td><input  type="file" name="procDefFile"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="addProcDefbtn" href="javascript:void(0)" class="easyui-linkbutton">添加</a></td>
+		    			<td><a id="clearAddbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+    <div id="lookProcImgWin" class="easyui-window" title="查看监控图" 
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:600px;height:400px;">
+    	<img  id="procDefImg" src="/static/image/loading.gif">
+    </div>
+  </body>
+</html>

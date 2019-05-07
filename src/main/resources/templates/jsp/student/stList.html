@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){		
+		
+			$("#stAdd").click(function(){
+				$("#stAddWin").window("open");
+			});
+			$("#clearAddbtn").click(function(){
+				$("#addStForm").form("clear");
+			});
+			$("#addbtn").click(function(){
+				$("#addStForm").form("submit",{
+					success:function(r){
+					var r = eval('(' + r + ')');
+						if(r.success){
+							$.messager.alert("提示","添加成功","info",function(){
+								$('#stTable').datagrid("reload");
+							});
+						}else{
+							$.messager.alert("提示","添加失败","warning");
+						}
+					}
+				});
+			});
+			
+			$("#stRemove").click(function(){
+				var rows=$("#stTable").datagrid("getSelections");
+				if(rows.length==0){
+					$.messager.alert("提示","请选择你要删除的行","warning");
+				}else{
+					var paramObj= {};
+					$.each(rows,function(i,stDom){
+						paramObj["sts["+i+"].id"]=stDom.id;
+					});				
+					$.messager.confirm('确认','您确认想要删除记录吗？',function(r){    
+					    if (r){    
+					        $.ajax({
+								type:"post",
+								dataType:"json",
+								url:"/st/deleteStInfo",
+								data:paramObj,
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$.messager.alert("提示","删除成功","info",function(){
+											$('#stTable').datagrid('reload');
+											$('#stTable').datagrid('clearSelections');
+										});
+									}else{
+										$.messager.alert("提示","删除失败","warning");
+										$('#stTable').datagrid('clearSelections');
+									}
+								}
+							});   
+					    }    
+					}); 
+				}
+			});
+			
+			
+			$("#stEdit").click(function(){
+				var rows=$("#stTable").datagrid("getSelections");
+				if(rows.length==0){
+					$.messager.alert("提示","请选择你要修改的行","warning");
+				}else if(rows.length>1){
+					$.messager.alert("提示","只能修改一条信息","warning");
+				}else{
+					$('#editStForm').form('load',rows[0]);
+					$('#stEditWin').window('open'); //打开window
+				}
+			});
+			
+			
+			$("#editbtn").click(function(){
+				$('#editStForm').form('submit',{
+					success:function(r){
+						var r= eval( "(" +r+ ")" );
+						if(r.success){
+							$.messager.alert("提示","修改成功","info",function(){
+								$('#stTable').datagrid('reload');
+								$('#stEditWin').window('close');
+								$('#editStForm').datagrid('clearSelections');
+							});
+						}else{
+							$.messager.alert("提示","修改失败","warning");
+							$('#editStForm').datagrid('clearSelections');
+						}
+					}
+				}); 
+			});   			
+		});	
+	</script>
+  </head>
+  
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="stTable" class="easyui-datagrid" 
+	 data-options="url:'/st/findsts',
+					fitColumns:true,
+				    border:false,
+				    fit :true,
+				    singleSelect:false,
+				    idField: 'id',
+				    rownumbers: true,
+				    pagination:true,
+				    toolbar: '#toolbar'">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'text',width:100">社团名字</th>   
+	           <th data-options="field:'sz',width:100">社长</th>   
+	           <th data-options="field:'des'">社团介绍</th>     
+	       </tr>   
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+	  	  <a id="stAdd" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">添加</a>
+		  <a id="stRemove" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">删除</a>
+		  <a id="stEdit" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true">修改</a>
+	 </div>
+	 <div id="stAddWin" class="easyui-window" title="添加社团"  
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:300px;">
+    	<div class="easyui-panel" style="width:400px;height: 300px">
+	    	 <form id="addStForm" method="post" action="/st/addStInfo">
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>社团名称:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="text" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>社长:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="sz" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>社团描述:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="des" data-options="required:true"></input></td>
+		    		</tr>
+		    		
+		    		<tr>
+		    			<td><a id="addbtn" href="javascript:void(0)" class="easyui-linkbutton">添加</a></td>
+		    			<td><a id="clearAddbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+    <div id="stEditWin" class="easyui-window" title="修改用户"  
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:300px;">
+    	<div class="easyui-panel" style="width:400px;height: 300px">
+	    	 <form id="editStForm" method="post" action="/st/editStInfo">
+	    	 	<input  type="text" name="id" hidden = "hidden"></input>
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>社团名称:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="text" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>社长:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="sz" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>社团描述:</td>
+		    			<td><input class="easyui-validatebox textbox" type="text" name="des" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="editbtn" href="javascript:void(0)" class="easyui-linkbutton">修改</a></td>
+		    			<td><a id="clearEditbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+  </body>
+</html>
+  

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$("#editbtn").click(function(){
+				var password1=$("input[name='password1']").val();
+				var password2=$("input[name='password2']").val();
+				var password3=$("input[name='password3']").val();
+				var message1=$("#message1").html();
+				var message2=$("#message2").html();
+				$.ajax({
+				type:"post",
+				dataType:"json",
+				url: "/user/editPswd",
+				data:{
+					password:password3
+				},
+				beforeSend:function(){
+					if(password1 == null || password1 == ""){
+						return false;
+					}
+					if(password2 == null || password2 == ""){
+						$.messager.alert("提示","请输入新密码","warning");
+						return false;
+					}
+					if(password3 == null || password3 == ""){
+						$.messager.alert("提示","请再次输入新密码","warning");
+						return false;
+					}
+					if(message1 != "" && message1 != null){
+						$("#message1").html("<font color='red'>密码不正确</font>");
+						return false;
+					}
+					if(message2 != "" && message2 != null){
+						$("#message2").html("<font color='red'>密码不一致</font>");
+						return false;
+					}
+					
+					return true;
+				},
+				success:function(r){
+					if(r.success){
+						$.messager.alert("提示","修改成功","info",function(){
+							window.location.href="/ui/index";
+						});	
+					}else{
+						$.messager.alert("提示","修改失败","warning");
+					}
+				}
+			});
+		});
+		});
+		function validatePswd(){
+				$.ajax({
+					type:"post",
+					dataType:"json",
+					url: "/user/validatePswd",
+					data:{
+						password:$("input[name='password1']").val()
+					},
+					beforeSend:function(){
+						return true;
+					},
+					success:function(r){
+						if(!r.success){
+							$("#message1").html("<font color='red'>密码不正确</font>");
+						}else{
+							$("#message1").html("");
+						}
+					}
+				});
+			}
+		function validatePswd2(){
+			var password2=$("input[name='password2']").val();
+			var password3=$("input[name='password3']").val();
+			if(password2 != password3){
+				$("#message2").html("<font color='red'>密码不一致</font>");
+			}else{
+				$("#message2").html("");
+			}
+		}
+	</script>
+  </head>
+  
+  <body>
+  	
+    <div class="easyui-panel">
+	    <form id="addUserForm" method="post" action="">
+	    	<table cellpadding="5">
+	    		<tr>
+	    			<td>旧密码:</td>
+	    			<td><input  class="easyui-validatebox" type="password" name="password1" data-options="required:true"  onblur="validatePswd();"></input>
+	    			<span id="message1"></span>
+	    			</td>	    			
+	    		</tr>
+	    		<tr>
+	    			<td>新密码:</td>
+	    			<td><input  class="easyui-validatebox" type="password" name="password2" data-options="required:true"></input></td>
+	    		</tr>
+	    		<tr>
+	    			<td>重复新密码:</td>
+	    			<td><input  class="easyui-validatebox" type="password" name="password3" data-options="required:true" onblur="validatePswd2();"></input>
+	    			<span id="message2"></span>
+	    			</td>
+	    		</tr>
+	    		<tr>
+	    			<td><a id="editbtn" href="javascript:void(0)" class="easyui-linkbutton">修改</a></td>
+	    			<td><a id="clearbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    	</tr>
+	    	</table>
+		</form>
+	</div>
+	
+  </body>
+</html>

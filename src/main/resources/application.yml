@@ -1,0 +1,36 @@
+server:
+  port: 8082
+mybatis:
+  config-location: classpath:mybatis/mybatis.cfg.xml
+  type-aliases-package: com.nysit.stay.domain
+  mapper-locations:
+    - classpath:mybatis/mapper/*.xml
+  
+
+spring:
+  thymeleaf:
+    cache: true
+    enabled: true
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: 94450
+    url: jdbc:mysql://localhost:3306/stay?characterEncoding=utf-8&useSSL=false
+    type: org.apache.commons.dbcp.BasicDataSource
+    dbcp2:
+      min-idle: 5
+      max-total: 5
+      initial-size: 5
+      max-wait-millis: 200
+  activiti:
+          check-process-definitions: false
+  http:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      file-size-threshold: 0
+      max-request-size: 100Mb
+      
+
+      
+  

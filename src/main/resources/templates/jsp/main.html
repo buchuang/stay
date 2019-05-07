@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$("#menuTree").tree({
+				url:'/user/menuList',
+				method:'get',
+				animate:true,
+				onClick: function(node){
+					if(node.url != null && node.url != ""){
+						if(!$('#userTabs').tabs("exists",node.text)){
+							$('#userTabs').tabs('add',{    
+							   title:node.text,    
+							   content:'<iframe scrolling="auto" frameborder="0"  src='+node.url+' style="width:100%;height:100%;"></iframe>',    
+							   closable:true,         
+							});
+						}else{
+								$('#userTabs').tabs('select',node.text);  
+								var tab = $('#userTabs').tabs('getSelected');
+					            $('#userTabs').tabs('update', {
+			                        tab: tab,
+			                        options: {
+			                        	title:node.text,
+			                            content: '<iframe scrolling="auto" frameborder="0"  src='+node.url+' style="width:100%;height:100%;"></iframe>'
+			                        }
+			
+			                    });
+						}
+					}
+				}
+			});
+		});
+		
+		function startTime()
+			{
+			var today=new Date()
+			var y=today.getFullYear();
+			var m=today.getMonth();
+			var d=today.getDate();
+			var h=today.getHours()
+			var mm=today.getMinutes()
+			var s=today.getSeconds()
+			m=checkTime(m)
+			s=checkTime(s)
+			document.getElementById('datetime').innerHTML=y+"-"+m+"-"+d+" "+h+":"+mm+":"+s;
+			t=setTimeout('startTime()',500)
+			}
+			
+		function checkTime(i)
+			{
+			if (i<10) 
+			  {i="0" + i}
+			  return i
+		}
+	</script>
+  </head>
+  
+  <body class="easyui-layout" onload="startTime();" style="width:100%">
+    <div data-options="region:'north',border:false" style="height:64px;background:#B3DFDA;">
+    	<font size="20" color="#000088" style="font-style: italic;">大学生留校系统</font>
+    	<span style="font-size: 15px; color: red;margin-left: 750px">欢迎你:
+    		<th:block th:text="${session.user.username}"/>
+    		&nbsp;&nbsp;
+    		<span id="datetime" style="font-size: 15px; color: #000088;"></span>
+    	</span>
+    </div>
+    
+	<div data-options="region:'west',split:true,title:'系统菜单',collapsible:false" style="width:200px;">
+		<ul id="menuTree"></ul>
+	</div>
+	
+	<div data-options="region:'south',border:false" style="height:46px;background:#A9FACD;"><font color="#000088">南阳理工学院</font></div>
+	
+	<div data-options="region:'center'" style="width:100%;height: 100%">
+		<div id="userTabs" class="easyui-tabs" style="width:1162px;height:542px">
+			<div title="欢迎页面">
+				<img alt="欢迎" src="/static/1.jpg" height="511px" width="1160">
+			</div>
+		</div>
+	</div>
+	
+  </body>
+</html>

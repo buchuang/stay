@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('#stayTable').datagrid({    
+			    url:'/stay/yslxdList',    
+			    fitColumns:true,
+			    border:false,
+			    fit :true,
+			    singleSelect:false,
+			    idField: "id",
+			    rownumbers: true,
+			    pagination:true,
+			    toolbar: '#toolbar'
+			});
+			
+			$("#apphistory").click(function(){
+				var editLine=$("#stayTable").datagrid("getSelections");
+				if(editLine.length==0){
+					$.messager.alert("提示","请选择你要查看历史的行","warning");
+				}else if(editLine.length>1){
+					$.messager.alert("提示","只能选择一条信息查看","warning");
+				}else{
+					$('#apphistoryWin').window('open'); //打开window
+					$('#appHistoryTable').datagrid({    
+					    url:'/stay/historyList?id='+editLine[0].id,    
+					    fitColumns:true,
+					    border:false,
+					    fit :true,
+					    singleSelect:false,
+					    rownumbers: true,
+					});
+				}
+			});
+			
+	});	 
+	</script>
+  </head>
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="stayTable">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'s_no',width:100">学号</th>   
+	           <th data-options="field:'s_name',width:100">姓名</th>   
+	           <th data-options="field:'s_class',width:100">班级</th>   
+	           <th data-options="field:'s_phone',width:100">电话</th>   
+	           <th data-options="field:'s_starttime',width:100">留校起始时间</th>   
+	           <th data-options="field:'s_endtime',width:100">结束时间</th>
+	           <th data-options="field:'s_ssbh',width:100">宿舍编号</th>   
+	           <th data-options="field:'s_reason',width:100">留校原因</th>   
+	           <th data-options="field:'s_zdls',width:100">指导老师</th>   
+	           <th data-options="field:'s_status',width:100,align:'right'">状态</th>   
+	       </tr>   
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+		  <a id="apphistory" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">审批历史</a>
+	 </div>
+     <div id="apphistoryWin" class="easyui-window" title="审批历史" 
+     			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:550px;height:400px;">
+    	<table id="appHistoryTable">   
+	   <thead>   
+	       <tr>  
+	           <th data-options="field:'s_name',width:100">姓名</th>      
+	           <th data-options="field:'spr_name',width:100">审批人</th>      
+	           <th data-options="field:'sp_status',width:100">审批意见</th>      
+	           <th data-options="field:'createtime',width:100">审批时间</th>           
+	       </tr>   
+	   </thead>   
+	</table>
+    </div>
+  </body>
+</html>

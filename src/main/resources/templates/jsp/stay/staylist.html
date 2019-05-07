@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+  <head>  
+    <title>大学生留校办理系统</title>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/default/easyui.css}"></link>
+		<link rel="stylesheet" type="text/css" th:href="@{/static/themes/icon.css}"></link>
+		<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/js/jquery.easyui.min.js}"></script>
+		<script type="text/javascript" th:src="@{/static/locale/easyui-zh_CN.js}"></script>
+	<script type="text/javascript">
+		$(function(){
+			$('#stayTable').datagrid({    
+			    url:'/stay/stayList',    
+			    fitColumns:true,
+			    border:false,
+			    fit :true,
+			    singleSelect:false,
+			    idField: "id",
+			    rownumbers: true,
+			    pagination:true,
+			    toolbar: '#toolbar'
+			});
+			
+			$("#stayAdd").click(function(){
+						$.ajax({
+						     url: '/stay/findAllZdls',
+						     dataType: 'json',                    
+						     success: function (jsonstr) {                        
+						     jsonstr.unshift({                            
+						     'username': '-请选择-',                            
+						     'username': '-请选择-'                        
+					     });                     
+						     $('#zdlsSelect').combobox({                            
+							     data: jsonstr,                            
+							     valueField: 'username',                            
+							     textField: 'username',                            
+							     onLoadSuccess: function () { //加载完成后,设置选中第一项                               
+							      	var val = $(this).combobox('getData');
+							      	$(this).combobox('select', val[0].username);                                                         
+					     		 }                        
+					      	});                    
+					      }                
+					  });
+				$('#stayAddWin').window('open')
+			});
+			
+			$("#addbtn").click(function(){
+				var value=$('#zdlsSelect').combobox('getValue');
+				if(value=='-请选择-'){
+					$.messager.alert("提示","请选择指导老师！！","warning");
+				}else{
+						$("#addStayForm").form("submit",{
+						success:function(r){
+						var r = eval('(' + r + ')');
+							if(r.success){
+								$.messager.alert("提示","添加成功","info",function(){
+									$('#stayTable').datagrid('reload');
+								});
+							}else{
+								$.messager.alert("提示","添加失败","warning");
+							}
+						}
+					});
+				}
+			});
+			
+			
+			$("#clearAddbtn").click(function(){
+				$("#addStayForm").form("clear");
+				
+			});
+			
+			$("#stayRemove").click(function(){
+				var removeLine=$("#stayTable").datagrid("getSelections");
+				if(removeLine.length==0){
+					$.messager.alert("提示","请选择你要删除的行","warning");
+				}else{
+					var paramObj= {};
+					var flag=true;
+					$.each(removeLine,function(i,stayDom){
+						if(stayDom.s_status != "待审批"){
+							flag=false;
+							return false;
+						}
+						paramObj["stays["+i+"].id"]=stayDom.id;
+					});	
+					if(flag==false){
+						$.messager.alert("提示","审核中的信息不能删除","warning");
+						return;
+					}			
+					$.messager.confirm('确认','您确认想要删除记录吗？',function(r){    
+					    if (r){    
+					        $.ajax({
+								type:"post",
+								dataType:"json",
+								url:"/stay/deleteStayTicket",
+								data:paramObj,
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$.messager.alert("提示","删除成功","info",function(){
+											$('#stayTable').datagrid('reload');
+											$('#stayTable').datagrid('clearSelections');
+										});
+									}else{
+										$.messager.alert("提示","删除失败","warning");
+										$('#stayTable').datagrid('clearSelections');
+									}
+								}
+							});   
+					    }   
+					}); 	
+				}
+			});
+			
+			
+			$("#stayEdit").click(function(){
+				var editLine=$("#stayTable").datagrid("getSelections");
+				if(editLine.length==0){
+					$.messager.alert("提示","请选择你要修改的行","warning");
+				}else if(editLine.length>1){
+					$.messager.alert("提示","只能修改一条信息","warning");
+				}else{
+					var row=editLine[0];
+					if(row.s_status != "待审批"){
+						$.messager.alert("提示","审核中的信息不能修改","warning");
+					}else{
+						var selectAdls= editLine[0].s_zdls;  
+						$('#editStayForm').form('load',editLine[0]);
+						$.ajax({
+						     url: '/stay/findAllZdls',
+						     dataType: 'json',                    
+						     success: function (jsonstr) {                        
+						     jsonstr.unshift({                            
+						     'username': '-请选择-',                            
+						     'username': '-请选择-'                        
+					     });	                  
+						     $('#zdlsSelectEdit').combobox({                            
+							     data: jsonstr,                            
+							     valueField: 'username',                            
+							     textField: 'username'                                    
+					      	});
+					      	$('#zdlsSelectEdit').combobox("setValue",selectAdls);                    
+					      	$('#zdlsSelectEdit').combobox("setText",selectAdls);                    
+					      }                
+					  });
+						
+						$('#stayEditWin').window('open'); //打开window
+					}
+				}
+			});
+			
+			$("#apphistory").click(function(){
+				var editLine=$("#stayTable").datagrid("getSelections");
+				if(editLine.length==0){
+					$.messager.alert("提示","请选择你要查看历史的行","warning");
+				}else if(editLine.length>1){
+					$.messager.alert("提示","只能选择一条信息查看","warning");
+				}else if(editLine[0].s_status=="待审批"){
+					$.messager.alert("提示","该信息还未进入审核","warning");
+				}else{
+					$('#apphistoryWin').window('open'); //打开window
+					$('#appHistoryTable').datagrid({    
+					    url:'/stay/historyList?id='+editLine[0].id,    
+					    fitColumns:true,
+					    border:false,
+					    fit :true,
+					    singleSelect:false,
+					    rownumbers: true,
+					});
+				}
+			});
+			
+			
+			$("#editbtn").click(function(){
+			var value=$('#zdlsSelect').combobox('getValue');
+				if(value=='-请选择-'){
+					$.messager.alert("提示","请选择指导老师！！","warning");
+				}else{
+					$("#editStayForm").form("submit",{
+						success:function(r){
+							var r=eval('('+r+')');
+							if(r.success){
+								$.messager.alert("提示","修改成功","info",function(){
+									$('#stayTable').datagrid('reload');
+									$('#stayEditWin').window('close');
+									$('#stayTable').datagrid('clearSelections');
+								});
+							}else{
+								$.messager.alert("提示","修改失败","warning");
+								$('#stayTable').datagrid('clearSelections');
+							}
+						}
+					}); 
+				}
+				  
+			});
+			
+			
+			$("#startProcess").click(function(){
+				var startLine=$("#stayTable").datagrid("getSelections");
+				if(startLine.length==0){
+					$.messager.alert("提示","请选择你要申请的行","warning");
+				}else if(startLine.length>1){
+					$.messager.alert("提示","只能申请一条信息","warning");
+				}else{
+					var row=startLine[0];
+					if(row.s_status != "待审批"){
+						$.messager.alert("提示","只能申请待审批的信息","warning");
+					}else{
+						$.messager.confirm('确认','您确认想要申请这条记录吗？',function(r){    
+					    if (r){
+							$.ajax({
+								url:"/stay/editStatus",
+								type:"post",
+								dataType:"json",
+								data:{
+									id : row.id,
+									zdls : row.s_zdls
+								},
+								beforeSend:function(){
+									return true;
+								},
+								success:function(r){
+									if(r.success){
+										$('#stayTable').datagrid('reload');
+										$.messager.alert("提示","申请成功","info");
+										$('#stayTable').datagrid('clearSelections');
+									}else{
+										$.messager.alert("提示","申请失败","warning");
+										$('#stayTable').datagrid('clearSelections');
+									}
+								}
+							});
+						}
+						
+					});
+				}
+			}
+		});
+	});	 
+	</script>
+  </head>
+  <body class="easyui-layout">
+  	  <div data-options="region:'center',border:false"></div>
+	 <table id="stayTable">   
+	   <thead>   
+	       <tr>
+	           <th data-options="field:'id',hidden:'true'"></th>   
+	           <th data-options="field:'s_no',width:100">学号</th>   
+	           <th data-options="field:'s_name',width:100">姓名</th>   
+	           <th data-options="field:'s_class',width:100">班级</th>   
+	           <th data-options="field:'s_phone',width:100">电话</th>   
+	           <th data-options="field:'s_starttime',width:100">留校起始时间</th>   
+	           <th data-options="field:'s_endtime',width:100">结束时间</th>
+	           <th data-options="field:'s_ssbh',width:100">宿舍编号</th>   
+	           <th data-options="field:'s_reason',width:100">留校原因</th>   
+	           <th data-options="field:'s_zdls',width:100">指导老师</th>   
+	           <th data-options="field:'s_status',width:100,align:'right'">状态</th>   
+	       </tr>   
+	   </thead>   
+	</table>
+	<div id="toolbar" style="background-color: #B3DFDA">
+	  	  <a id="stayAdd" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">添加</a>
+		  <a id="stayRemove" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">删除</a>
+		  <a id="stayEdit" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true">修改</a>
+		  <a id="startProcess" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">进入申请流程</a>
+		  <a id="apphistory" href="#" class="easyui-linkbutton" data-options="iconCls:'icon-redo',plain:true">审批历史</a>
+	 </div>
+	 
+	 <div id="stayAddWin" class="easyui-window" title="添加申请单" 
+	 			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:450px;">
+    	<div class="easyui-panel" style="width:400px;height: 450px">
+	    	 <form id="addStayForm" method="post" action="/stay/addStayTicket">
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>学号:</td>
+		    			<td><input  class="easyui-validatebox textbox" type="text" name="s_no" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>姓名:</td>
+		    			<td><input  class="easyui-validatebox textbox" type="text" name="s_name" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>班级:</td>
+		    			<td><input  class="easyui-validatebox textbox" type="text" name="s_class" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>电话:</td>
+		    			<td><input class="easyui-validatebox" type="text" name="s_phone" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>留校起始时间:</td>
+		    			<td><input class="easyui-datetimebox" type="text" name="s_starttime" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>结束时间:</td>
+		    			<td><input class="easyui-datetimebox" type="text" name="s_endtime" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>宿舍编号:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="s_ssbh" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>留校原因:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="s_reason" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>指导老师:</td>
+		    			<td><input id="zdlsSelect" class="easyui-combobox" name="s_zdls" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="addbtn" href="javascript:void(0)" class="easyui-linkbutton">添加</a></td>
+		    			<td><a id="clearAddbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+    <div id="stayEditWin" class="easyui-window" title="修改申请单" 
+    			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:400px;height:450px;">
+    	<div class="easyui-panel" style="width:400px;height: 450px">
+	    	 <form id="editStayForm" method="post" action="/stay/editStayTicket">
+	    	 	<input  type="text" name="id" hidden = "hidden"></input>
+		    	<table cellpadding="5">
+		    		<tr>
+		    			<td>学号:</td>
+		    			<td><input  class="easyui-validatebox textbox" type="text" name="s_no" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>姓名:</td>
+		    			<td><input  class="easyui-validatebox textbox" type="text" name="s_name" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>班级:</td>
+		    			<td><input  class="easyui-validatebox textbox" type="text" name="s_class" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>电话:</td>
+		    			<td><input class="easyui-validatebox" type="text" name="s_phone" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>留校起始时间:</td>
+		    			<td><input class="easyui-datetimebox" type="text" name="s_starttime" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>结束时间:</td>
+		    			<td><input class="easyui-datetimebox" type="text" name="s_endtime" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>宿舍编号:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="s_ssbh" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>留校原因:</td>
+		    			<td><input  class="easyui-validatebox" type="text" name="s_reason" data-options="required:true"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>指导老师:</td>
+		    			<td><input id="zdlsSelectEdit" class="easyui-combobox" name="s_zdls" data-options="required:true"></td>
+		    		</tr>
+		    		<tr>
+		    			<td><a id="editbtn" href="javascript:void(0)" class="easyui-linkbutton">修改</a></td>
+		    			<td><a id="clearEditbtn" href="javascript:void(0)" class="easyui-linkbutton">清空</a></td>
+		    		</tr>
+		    	</table>
+		    </form>
+	    </div>
+    </div>
+     <div id="apphistoryWin" class="easyui-window" title="审批历史" 
+     			data-options="modal : true,
+    						closed : true,
+    						collapsible : false,
+    						minimizable : false,
+    						maximizable : false" style="width:550px;height:400px;">
+    	<table id="appHistoryTable">   
+	   <thead>   
+	       <tr>  
+	           <th data-options="field:'s_name',width:100">姓名</th>      
+	           <th data-options="field:'spr_name',width:100">审批人</th>      
+	           <th data-options="field:'sp_status',width:100">审批意见</th>      
+	           <th data-options="field:'createtime',width:100">审批时间</th>           
+	       </tr>   
+	   </thead>   
+	</table>
+    </div>
+  </body>
+</html>

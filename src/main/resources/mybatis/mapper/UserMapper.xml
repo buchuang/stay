@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nysit.stay.dao.UserDao" >
+		
+	<select id="getCountByQuery" resultType="int">
+		select count(*) from user 
+		where concat( usercode, username, phone, identify) like '%${queryValue}%'
+	</select>
+	
+	<select id="findUserByQuery" resultType="User">
+		select * from user
+		where concat( usercode, username, phone, identify) like '%${queryValue}%'
+		limit #{startIndex},#{limitno}
+	</select>
+	
+	<update id="editPswd">
+		update user
+		set password=#{password}
+		where id=#{id}
+	</update>
+
+	<delete id="deleteMenuQxByUserId">
+		delete from user_menu
+		where userid=#{userid}
+	</delete>
+
+	<delete id="deleteMenuQx">
+		delete from user_menu
+		where userid in
+		<foreach collection="users" open="(" close=")" separator="," item="user">
+ 			${user.id}
+ 		</foreach>
+	</delete>
+
+	<insert id="updateqx">
+		insert into user_menu(menuid,userid)
+		values(#{qx},#{id})
+	</insert>
+
+ 	<update id="editUser">
+ 		update user set 
+ 		usercode=#{usercode},
+ 		username=#{username},
+ 		phone=#{phone},
+ 		identify=#{identify}
+ 		where id=#{id}
+ 	</update>
+ 	<delete id="deleteUser">
+ 		delete from user where
+ 		id in
+ 		<foreach collection="users" open="(" close=")" separator="," item="user">
+ 			${user.id}
+ 		</foreach>
+ 	</delete>
+ 	
+ 	<insert id="saveUser">
+ 		insert into user(usercode,password,username,phone,identify)
+ 		 values(#{usercode},"123456",#{username},#{phone},#{identify})
+ 		 <selectKey resultType="int" keyProperty="id" order="AFTER">
+ 		 	 select @@IDENTITY
+ 		 </selectKey> 		
+ 	</insert>
+ 	
+ 	<select id="findUserByPage" resultType="User">
+ 		SELECT * FROM user limit #{startIndex},#{limitno}
+ 	</select>
+ 	
+ 	<select id="findQxByUserid" resultType="string">
+ 		select GROUP_CONCAT(menuid) from user_menu where userid=#{userid} and menuid >=
+		(select MIN(id) from menu where pid>1)
+ 	</select>
+ 	
+ 	<select id="getCount" resultType="int">
+ 		select count(*) from user
+ 	</select>
+ 
+ 	<select id="findMenuByid" resultType="Menu">
+ 		select * from menu where id=#{id}
+ 	</select>
+ 	<select id="getMenusByUid" resultType="Menu">
+ 		select m.* from menu m,user_menu um
+ 		where m.id=um.menuid and um.userid=#{uid}
+ 		
+ 	</select>
+ 	
+ 	<select id="findUserByName" resultType="User">
+ 		select * from user where usercode=#{usercode}
+ 	</select>
+ 	
+    <select id="findAll" resultType="User">
+        SELECT * FROM user
+    </select>
+ 
+</mapper>
